@@ -1,8 +1,8 @@
 <?php
 
-namespace Database\Seeders; // Add this namespace declaration
+namespace Database\Seeders;
 
-use Illuminate\Database\Seeder; // Import the Seeder class
+use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
@@ -11,15 +11,17 @@ class RolesAndPermissionsSeeder extends Seeder
     public function run()
     {
         // Create roles
-        $admin = Role::create(['name' => 'admin']);
-        $user = Role::create(['name' => 'user']);
+        $admin = Role::firstOrCreate(['name' => 'admin']); // Ensures the role is not duplicated
+        $user = Role::firstOrCreate(['name' => 'user']);   // Ensures the role is not duplicated
 
         // Create permissions
-        Permission::create(['name' => 'manage posts']);
-        Permission::create(['name' => 'edit profile']);
+        $managePostsPermission = Permission::firstOrCreate(['name' => 'manage posts']); // Avoid duplication
+        $editProfilePermission = Permission::firstOrCreate(['name' => 'edit profile']); // Avoid duplication
 
         // Assign permissions to roles
-        $admin->givePermissionTo(['manage posts', 'edit profile']);
-        $user->givePermissionTo('edit profile');
+        $admin->givePermissionTo([$managePostsPermission, $editProfilePermission]);
+        $user->givePermissionTo($editProfilePermission);
+
+        $this->command->info('Roles and permissions have been successfully seeded!');
     }
 }

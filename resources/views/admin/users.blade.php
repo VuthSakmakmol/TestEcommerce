@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container">
-        <h1>Manage Users</h1>
+    <div class="container mt-5">
+        <h1 class="mb-4">Manage Users</h1>
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
-        <table class="table">
-            <thead>
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
                 <tr>
                     <th>User</th>
                     <th>Email</th>
@@ -24,14 +24,16 @@
                         <td>
                             <form action="{{ route('admin.assignRole', $user->id) }}" method="POST">
                                 @csrf
-                                <select name="role" class="form-control">
-                                    @foreach($roles as $role)
-                                        <option value="{{ $role->name }}" {{ $user->hasRole($role->name) ? 'selected' : '' }}>
-                                            {{ $role->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <button type="submit" class="btn btn-primary mt-2">Assign Role</button>
+                                <div class="input-group">
+                                    <select name="role" class="form-select">
+                                        @foreach($roles as $role)
+                                            <option value="{{ $role->name }}" {{ $user->hasRole($role->name) ? 'selected' : '' }}>
+                                                {{ $role->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button type="submit" class="btn btn-primary">Assign</button>
+                                </div>
                             </form>
                         </td>
                     </tr>

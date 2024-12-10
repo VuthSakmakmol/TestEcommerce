@@ -1,63 +1,64 @@
 <?php
-
 namespace App\Http\Controllers;
+use Illuminate\Support\Facades\Log;
 
-use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Http\RedirectResponse;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
-    public function edit(Request $request): Response
+    // Edit the authenticated user's profile
+    public function edit()
     {
-        return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-            'status' => session('status'),
-        ]);
+        $user = auth()->user(); // Get the logged-in user
+        return view('profile.edit', compact('user'));
     }
 
-    /**
-     * Update the user's profile information.
-     */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+
+public function update(Request $request)
+{
+    // Get the authenticated user
+    /** @var User $user */
+    $user = auth()->user();
+    Log::info('Authenticated User:', $user->toArray());
+
+    // Validate the request
+    $validatedData = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+    ]);
+
+    // Update the user's profile manually
+    $user->name = $validatedData['name'];
+    $user->email = $validatedData['email'];
+    $user->save(); // Save to the database
+
+    // Log the updated user
+    Log::info('Updated User:', $user->fresh()->toArray());
+
+    return redirect()->route('profile.edit')->with('success', 'Profile updated successfully!');
+}
+
+
+
+
+
+    // Admin edits any user's profile
+    public function adminEdit(User $user)
     {
-        $request->user()->fill($request->validated());
-
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
-        }
-
-        $request->user()->save();
-
-        return Redirect::route('profile.edit');
+        return view('admin.profile.edit', compact('user'));
     }
 
-    /**
-     * Delete the user's account.
-     */
-    public function destroy(Request $request): RedirectResponse
+    // Admin updates any user's profile
+    public function adminUpdate(Request $request, User $user)
     {
         $request->validate([
-            'password' => ['required', 'current_password'],
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
         ]);
 
-        $user = $request->user();
+        $user->update($request->only('name', 'email'));
 
-        Auth::logout();
-
-        $user->delete();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
+        return redirect()->route('admin.profile.edit', $user)->with('success', 'User profile updated successfully!');
     }
 }
